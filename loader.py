@@ -35,16 +35,34 @@ from Tkinter import *
 import tkFileDialog
 import ttk
 
-import serial
+import serial 
 import json
 import time
+
+class AppControl( object ):
+	def __init__( self, root, arduinoCmds, arduinoLink ):
+		self._arduinoCmds = arduinoCmds
+		self._arduinoLink = arduinoLink
+
+		lfrm = LabelFrame( root, padx=10, pady=10, borderwidth=0 )
+		btnStop  = Button( lfrm, text='Stop', width=16, command=lambda: self.onStopButtonClick( ))
+		btnExit  = Button( lfrm, text='Exit', width=16, command=exit )
+
+		lfrm.grid( row=3, column=0, sticky=SW )
+		btnExit.grid ( row=0, column=0 )
+		btnStop.grid ( row=0, column=1 )
+
+	def onStopButtonClick( self ):
+		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["stop"] )
 
 # ArduinoLink encapsulates the serial port connection and the 
 # trace control.
 class ArduinoLink( object ):
-	def __init__( self, root, arduinoCmds, debug ):
+	def __init__( self, root, arduinoCmds, debug ): 
 		self._root = root
 		self._debug = debug
+		self._conn = None
+
 		try:
 			if( debug == False ):
 				self._conn = serial.Serial( 
@@ -57,57 +75,27 @@ class ArduinoLink( object ):
 			raise 
 	
 	def Tick( self ):
-		if self._debug == True:
-			self._trace._textwidget.config( state='normal' )
-			self._trace._textwidget.insert( END, '...tick...\n' )
-			self._trace._textwidget.see( END )
-			self._trace._textwidget.config( state='disabled' )
-
-			# reset the idle event timer
-			self._root.after( 500, self.Tick )
-			return
-
-		readBuffer = ''
-
 		# see if the arduino has written anything to the serial port
-		bytesToRead = ser.in_waiting()
-		if bytesToRead > 0:
-			# the arduino wrote some characters...
-			# read the serial port in a loop until 
-			# the end-of-message character is read
-			while True:
-				# read the characters sent from the arduino
-				readBuffer += this._conn.read( bytesToRead )
+		if( self._debug == False ):
+			bytesToRead = self._conn.inWaiting()
+			if bytesToRead > 0:
+				# enable writing to the textwidget
+				self._trace._textwidget.config( state='normal' )
 
-				# see if the arduino sent the last character
-				if readBuffer.endswith( '=' ):
-					break;
+				# write the message received from the arduino to the textwidget
+				self._trace._textwidget.insert( END, self._conn.read( bytesToRead ))
 
-				# if the end-of-message character was 
-				# not received, wait for more characters
-				bytesToRead = ser.in_waiting()
-				while bytesToRead <= 0:
-					# wait 50 milliseconds
-					sleep( 0.5 )
-					# see if more characters arrived
-					bytesToRead = ser.in_waiting()
+				# write a newline to end the message
+				self._trace._textwidget.insert( END, '\n' )
 
-			# enable writing to the textwidget
-			self._trace._textwidget.config( state='normal' )
+				# scroll the textwidget to the end so you can see it
+				self._trace._textwidget.see( END )
 
-			# write the message received from 
-			# the arduino to the textwidget
-			self._trace._textwidget.insert( END, readBuffer )
-
-			# write a newline to end the message
-			self._trace._textwidget.insert( END, '\n' )
-			# scroll the textwidget to the end so you can see it
-			self._trace._textwidget.see( END )
-			# disable the text widget so it's read-only
-			self._trace._textwidget.config( state='disabled' )
+				# disable the text widget so it's read-only
+				self._trace._textwidget.config( state='disabled' )
 
 		# reset the idle event timer
-		self._root.after( 250, self.Tick )
+		self._root.after( 100, self.Tick )
 
 	def Send( self, cmd ):
 		# enable the trace window for writing
@@ -120,39 +108,17 @@ class ArduinoLink( object ):
 			# write the command to the arduino
 			self._conn.write( cmd + '=' )
 
-			# give the arduino time to respond
-			time.sleep( 0.025 )
-
-			# read and echo the response from the arduino
-			response = self.Read()
-
-			self._trace._textwidget.insert( END, response + '\n' )
-			self._trace._textwidget.insert( END, str( len( response )) + ' chars read\n' )
-			#self._trace._textwidget.see( END )
-		else:
-			self._trace._textwidget.insert( END, "debug mode\n" )
-			#self._trace._textwidget.see( END )
-
+		# scroll the text widget to the end so you can see it
 		self._trace._textwidget.see( END )
-		# disable user input to the trace window
-		self._trace._textwidget.config( state='disabled' )
 
-	def Read( self ):
-		responseStr = ''
-		if( self._debug == true ):
-			responseStr = 'debug mode'
-		else:
-			while True:
-				responseChar = self._conn.read( 1 )
-				responseStr += responseChar
-				if responseChar == '=': break
-		return responseStr
+		# disable user input to the trace widget so it's read-only
+		self._trace._textwidget.config( state='disabled' )
 
 # LoaderControl encapsulates a label frame, five buttons, and a combo box.
 # The combo box lets you select one of the profiles defined in the json file, 
 # psdProfiles. The Load button sends the selected profile to the arduino. 
 # The Go button sends the go command to the arduino, instructing it to execute
-# the most recent profile. the reset button issues a reset command to the arduino.
+# the most recent profile. The reset button issues a reset command to the arduino.
 # The status button reads the arduino status output and displays it in the trace
 # window.
 class LoaderControl( object ):
@@ -162,10 +128,10 @@ class LoaderControl( object ):
 		self._arduinoLink = arduinoLink
 		self._profiles = None
 
-		lfrm = LabelFrame( root, text='Load Functions', padx=10, pady=10, borderwidth=0 )
-		btnReset      = Button( lfrm, text='Reset',       width=12, command=lambda: self.btnReset_click( ))
-		btnFindNeedle = Button( lfrm, text='Find Needle', width=12, command=lambda: self.btnFindNeedle_click( ))
-		btnStatus     = Button( lfrm, text='Status',      width=12, command=lambda: self.btnStatus_click( ))
+		self._lfrm = LabelFrame( root, text='Load Functions', padx=10, pady=10, borderwidth=0 )
+		btnReset      = Button( self._lfrm, text='Reset',       width=16, command=lambda: self.onResetButtonClick( ))
+		btnFindNeedle = Button( self._lfrm, text='Find Needle', width=16, command=lambda: self.btnFindNeedle_click( ))
+		btnStatus     = Button( self._lfrm, text='Status',      width=16, command=lambda: self.onStatusButtonClick( ))
 
 		try:
 			with open('psdProfiles') as pfile:
@@ -181,15 +147,15 @@ class LoaderControl( object ):
 
 		self._box_value = StringVar()
 
-		self._cbox = ttk.Combobox( lfrm, textvariable=self._box_value, width=13 )
+		self._cbox = ttk.Combobox( self._lfrm, textvariable=self._box_value, width=13 )
 		self._cbox['values'] = profTuples
 		self._cbox.current(0)
 		self._cbox.state(['readonly'])
 
-		btnLoad = Button( lfrm, text='Load', width=12, command=lambda: self.btnLoad_click( ))
-		btnGo   = Button( lfrm, text='Go',   width=12, command=lambda: self.btnGo_click( ))
+		btnLoad = Button( self._lfrm, text='Load', width=16, command=lambda: self.btnLoad_click( ))
+		btnGo   = Button( self._lfrm, text='Go',   width=16, command=lambda: self.btnGo_click( ))
 
-		lfrm.grid         ( row=0, column=0, sticky='nw' )
+		self._lfrm.grid   ( row=0, column=0, sticky='nw' )
 		btnReset.grid     ( row=0, column=0 )
 		btnFindNeedle.grid( row=1, column=0 )
 		btnStatus.grid    ( row=0, column=1 )
@@ -219,13 +185,99 @@ class LoaderControl( object ):
 				#time.sleep( 1.0 )
 				self._arduinoLink.Send( selectedProfile[0]["m2"] )
 
-	def btnReset_click( self ):
+	def onResetButtonClick( self ):
 		self._arduinoLink.Send( self._arduinoCmds["m1"]["reverse"]["movelong"] )
-		#time.sleep( 1.0 )
 		self._arduinoLink.Send( self._arduinoCmds["m2"]["reverse"]["movelong"] )
 
-	def btnStatus_click( self ):
+	def onStatusButtonClick( self ):
 		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["status"] )
+
+	def Disable( self ):
+		for child in self._lfrm.winfo_children():
+			child.configure(state='disable')
+
+	def Enable( self ):
+		for child in self._lfrm.winfo_children():
+			child.configure(state='normal')
+
+class LoginControl( object ):
+        def __init__( self, root, loaderControl, m1Control, m2Control ):
+                lfrm = LabelFrame( root, text='Log Control', padx=10, pady=10, borderwidth=0 )
+
+                lfrmOper = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
+                labelOper = Label( lfrmOper, text="     operator:" )
+                entryOper = Entry( lfrmOper )
+
+		self._accession = StringVar()
+		self._accession.trace( 'w', self._HandleAccession )
+		self._accessionConf = StringVar()
+		self._accessionConf.trace( 'w', self._HandleAccessionConf )
+
+                lfrmAcc = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
+                labelAcc       = Label( lfrmAcc, text="accession id:" )
+                entryAccession = Entry( lfrmAcc, textvariable=self._accession )
+                labelAccConf   = Label( lfrmAcc, text="     confirm:" )
+                entryAccConf   = Entry( lfrmAcc, textvariable=self._accessionConf )
+
+		self._sampleId = StringVar()
+		self._sampleId.trace( 'w', self._HandleSampleId )
+		self._sampleIdConf = StringVar()
+		self._sampleIdConf.trace( 'w', self._HandleSampleIdConf )
+
+                lfrmSampleId = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
+                labelSampleId   = Label( lfrmSampleId, text="sample id:" )
+                entrySampleId   = Entry( lfrmSampleId, textvariable=self._sampleId )
+                labelSampleConf = Label( lfrmSampleId, text="  confirm:" )
+                entrySampleConf = Entry( lfrmSampleId, textvariable=self._sampleIdConf )
+
+                lfrmBtn = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
+                btnOK  = Button( lfrmBtn, text="OK", width=16, command=lambda: self.onOkButtonClick( loaderControl, m1Control, m2Control ))
+                #btnClr = Button( lfrmBtn, text="Clear", width=16, command=exit )
+		btnClr = Button( lfrmBtn, text="Clear",  width=16, command=lambda: self.onClearButtonClick( loaderControl, m1Control, m2Control ))
+
+                lfrm.grid( row=0, column=1, sticky=NSEW )
+                lfrmOper.grid( row=0, column=0, columnspan=2, sticky=W )
+                lfrmAcc.grid( row=1, column=0 )
+                lfrmSampleId.grid( row=1, column=1 )
+                lfrmBtn.grid( row=2, column=0 )
+
+                labelOper.grid( row=0, column=0 )
+                entryOper.grid( row=0, column=1, columnspan=2 )
+
+                labelAcc.grid( row=1, column=0, sticky=SW )
+                entryAccession.grid( row=1, column=1 )
+                labelAccConf.grid( row=2, column=0, sticky=SW )
+                entryAccConf.grid( row=2, column=1 )
+
+                labelSampleId.grid( row=3, column=0, sticky=SW )
+                entrySampleId.grid( row=3, column=1 )
+                labelSampleConf.grid( row=4, column=0, sticky=SW )
+                entrySampleConf.grid( row=4, column=1 )
+
+                btnOK.grid ( row=0, column=0 )
+                btnClr.grid( row=0, column=1 )
+
+	def _HandleAccession( self, *dummy ):
+		print 'accession: ', self._accession.get()
+
+	def _HandleAccessionConf( self, *dummy ):
+		print 'accession confirmation changed'
+
+	def _HandleSampleId( self, *dummy ):
+		print 'sample id changed'
+
+	def _HandleSampleIdConf( self, *dummy ):
+		print 'sample id confirmation changed'
+
+	def onOkButtonClick( self, loaderControl, m1Control, m2Control ):
+                loaderControl.Enable()
+		m1Control.Enable()
+		m2Control.Enable()
+
+	def onClearButtonClick( self, loaderControl, m1Control, m2Control ):
+                loaderControl.Disable()
+		m1Control.Disable()
+		m2Control.Disable()
 
 class MotorControl( object ):
 	def __init__( self, root, arduinoCmds, arduinoLink, motorNo ):
@@ -240,49 +292,56 @@ class MotorControl( object ):
 			self._frameText = 'M2 Control'
 			self._motorName= 'm2'
 
-		lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
-		btnHome    = Button( lfrm, text='Home',     width=12, command=lambda: self.btnHome_click   ( ))
-		btnLimit   = Button( lfrm, text='Limit',    width=12, command=lambda: self.btnLimit_click  ( ))
-		btnStepFwd = Button( lfrm, text='Step fwd', width=12, command=lambda: self.btnStepFwd_click( )) 
-		btnStepRvs = Button( lfrm, text='Step rvs', width=12, command=lambda: self.btnStepRvs_click( )) 
+		self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
 
-		lfrm.grid( row=self._motorNo, column=0, sticky='nw' )
+		btnHome = Button( self._lfrm, text='Home', width=16, 
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["movelong"] ))
+
+		btnLimit = Button( self._lfrm, text='Limit', width=16, 
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["movelong"] ))
+
+		btnStepFwd = Button( self._lfrm, text='Step fwd', width=16, 
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["moveshort"] ))
+
+		btnStepRvs = Button( self._lfrm, text='Step rvs', width=16, 
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["moveshort"] ))
+
+		btnJogFwdStart = Button( self._lfrm, text='Jog fwd start', width=16, 
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["jogstart"] ))
+
+		btnJogFwdStop = Button( self._lfrm, text='Jog fwd stop', width=16, 
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["jogstop"] ))
+
+		btnJogRvsStart = Button( self._lfrm, text='Jog rvs start', width=16, 
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["jogstart"] ))
+
+		btnJogRvsStop = Button( self._lfrm, text='Jog rvs stop', width=16, 
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["jogstop"] ))
+
+		self._lfrm.grid( row=self._motorNo, column=0, sticky='nw' )
 		btnHome.grid   ( row=0, column=0 )
 		btnLimit.grid  ( row=0, column=1 )
+
 		btnStepRvs.grid( row=1, column=0 )
 		btnStepFwd.grid( row=1, column=1 )
 
-	def btnHome_click( self ):
-		self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["movelong"] )
+		btnJogFwdStart.grid( row=2, column=0 )
+		btnJogFwdStop.grid ( row=2, column=1 )
 
-	def btnLimit_click( self ):
-		self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["movelong"] )
+		btnJogRvsStart.grid( row=3, column=0 )
+		btnJogRvsStop.grid ( row=3, column=1 )
 
-	def btnStepFwd_click( self ):
-		self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["moveshort"] )
+	def Disable( self ):
+		for child in self._lfrm.winfo_children():
+			child.configure(state='disable')
 
-	def btnStepRvs_click( self ):
-		self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["moveshort"] )
-
-class AppControl( object ):
-	def __init__( self, root, arduinoCmds, arduinoLink ):
-		self._arduinoCmds = arduinoCmds
-		self._arduinoLink = arduinoLink
-
-		lfrm = LabelFrame( root, padx=10, pady=10, borderwidth=0 )
-		btnStop  = Button( lfrm, text='Stop', width=12, command=lambda: self.btnStop_click( ))
-		btnExit  = Button( lfrm, text='Exit', width=12, command=exit )
-
-		lfrm.grid( row=4, column=0, sticky=SW )
-		btnExit.grid ( row=0, column=0 )
-		btnStop.grid ( row=0, column=1 )
-
-	def btnStop_click( self ):
-		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["stop"] )
+	def Enable( self ):
+		for child in self._lfrm.winfo_children():
+			child.configure(state='normal')
 
 class TraceControl( object ):
 	def __init__( self, root ):
-		lfrm = LabelFrame( root, text='Trace', padx=10, pady=10 )
+		lfrm = LabelFrame( root, text='Trace', padx=10, pady=10, borderwidth=0 )
 		self._textwidget = Text( lfrm, borderwidth=1 )
 		self._textwidget.config( state='disabled' )
 
@@ -290,9 +349,9 @@ class TraceControl( object ):
 		self._textwidget.config( yscrollcommand=sbTrace.set )
 		sbTrace.config( command=self._textwidget.yview )
 
-		btnClear = Button( lfrm, text='Clear', width=12, command=lambda: self.btnClear_click( ))
+		btnClear = Button( lfrm, text='Clear', width=16, command=lambda: self.onClearButtonClick( ))
 
-		lfrm.grid( row=0, column=1, rowspan=4, sticky='nsew' )
+		lfrm.grid( row=1, column=1, rowspan=3, sticky='nsew' )
 		lfrm.grid_rowconfigure( 0, weight=1 )
 		lfrm.grid_columnconfigure( 0, weight=1 )
 
@@ -301,7 +360,7 @@ class TraceControl( object ):
 
 		btnClear.grid( row=1, column=0, sticky='sw' )
 
-	def btnClear_click( self ):
+	def onClearButtonClick( self ):
 		self._textwidget.config( state='normal' )
 		self._textwidget.delete( '1.0', END )
 		self._textwidget.config( state='disabled' )
@@ -312,9 +371,16 @@ def BuildUI( tkRoot, arduinoCmds, debug ):
 	arduinoLink = ArduinoLink( frm, arduinoCmds, debug )
 
 	loaderControl = LoaderControl( frm, arduinoCmds, arduinoLink )
-	m1Control   = MotorControl( frm, arduinoCmds, arduinoLink, 1 )
-	m2Control   = MotorControl( frm, arduinoCmds, arduinoLink, 2 )
-	appControl  = AppControl( frm, arduinoCmds, arduinoLink )
+	loaderControl.Disable()
+
+	m1Control = MotorControl( frm, arduinoCmds, arduinoLink, 1 )
+	m1Control.Disable()
+
+	m2Control = MotorControl( frm, arduinoCmds, arduinoLink, 2 )
+	m2Control.Disable()
+
+	loginControl = LoginControl( frm, loaderControl, m1Control, m2Control )
+	appControl   = AppControl( frm, arduinoCmds, arduinoLink )
 
 	frm.grid( row=0, column=0, sticky=W )
 
@@ -340,3 +406,4 @@ def RunningInDebugMode( ):
 debug = RunningInDebugMode()
 root = BuildUI( Tk( ), LoadArduinoCommands(), debug )
 root.mainloop()
+

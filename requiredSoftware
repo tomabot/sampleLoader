@@ -1,0 +1,25 @@
+
+you will need these packages for the precision sample dispenser:
+
+	pyserial
+	tkinter
+
+// evdev requires all the rest of this stuff:
+	python-dev			// these next few if
+	python-pip			// your using evdev
+	gcc				// ...
+	linux-headers-$(uname -r)	// ...
+
+they all can be had with "sudo apt-get install ..."
+
+// and if you're using evdev...
+// you will also need to download the gz file
+// from https://pypi.python.org/pypi/evdev
+
+	evdev-0.5.0.tar.gz    // or whatever version it's at when you read this
+
+// and set this environment variable:
+
+	export PYTHON_EGG_CACHE=/home/vguser/.python-eggs
+
+
