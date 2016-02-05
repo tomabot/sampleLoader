@@ -38,6 +38,7 @@ import ttk
 import serial 
 import json
 import time
+import timeit
 
 class AppControl( object ):
 	def __init__( self, root, arduinoCmds, arduinoLink ):
@@ -130,7 +131,7 @@ class LoaderControl( object ):
 
 		self._lfrm = LabelFrame( root, text='Load Functions', padx=10, pady=10, borderwidth=0 )
 		btnReset      = Button( self._lfrm, text='Reset',       width=16, command=lambda: self.onResetButtonClick( ))
-		btnFindNeedle = Button( self._lfrm, text='Find Needle', width=16, command=lambda: self.btnFindNeedle_click( ))
+		btnFindNeedle = Button( self._lfrm, text='Find Needle', width=16, command=lambda: self.onFindNeedleButtonClick( ))
 		btnStatus     = Button( self._lfrm, text='Status',      width=16, command=lambda: self.onStatusButtonClick( ))
 
 		try:
@@ -163,7 +164,7 @@ class LoaderControl( object ):
 		btnLoad.grid      ( row=2, column=1 )
 		btnGo.grid        ( row=3, column=1 )
 
-	def btnFindNeedle_click( self ):
+	def onFindNeedleButtonClick( self ):
 		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["findneedle"] )
 
 	def btnGo_click( self ):
@@ -201,39 +202,43 @@ class LoaderControl( object ):
 			child.configure(state='normal')
 
 class LoginControl( object ):
-        def __init__( self, root, loaderControl, m1Control, m2Control ):
+        def __init__( self, root, loaderControl, m1Control, m2Control, barcodeLen ):
                 lfrm = LabelFrame( root, text='Log Control', padx=10, pady=10, borderwidth=0 )
 
+		self._operVar = StringVar()
+		
                 lfrmOper = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
                 labelOper = Label( lfrmOper, text="     operator:" )
-                entryOper = Entry( lfrmOper )
+                self.entryOper = Entry( lfrmOper, textvariable=self._operVar )
 
-		self._accession = StringVar()
-		self._accession.trace( 'w', self._HandleAccession )
-		self._accessionConf = StringVar()
-		self._accessionConf.trace( 'w', self._HandleAccessionConf )
+		self._accessionVar = StringVar()
+		self._accessionVar.trace( 'w', self._HandleAccession )
+		self._accessionConfVar = StringVar()
+		self._accessionConfVar.trace( 'w', self._HandleAccessionConf )
 
                 lfrmAcc = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
-                labelAcc       = Label( lfrmAcc, text="accession id:" )
-                entryAccession = Entry( lfrmAcc, textvariable=self._accession )
-                labelAccConf   = Label( lfrmAcc, text="     confirm:" )
-                entryAccConf   = Entry( lfrmAcc, textvariable=self._accessionConf )
+                labelAccession      = Label( lfrmAcc, text="accession id:" )
+                self.entryAccession = Entry( lfrmAcc, textvariable=self._accessionVar )
 
-		self._sampleId = StringVar()
-		self._sampleId.trace( 'w', self._HandleSampleId )
-		self._sampleIdConf = StringVar()
-		self._sampleIdConf.trace( 'w', self._HandleSampleIdConf )
+                labelAccessionConf      = Label( lfrmAcc, text="     confirm:" )
+                self.entryAccessionConf = Entry( lfrmAcc, textvariable=self._accessionConfVar )
+
+		self._sampleVar = StringVar()
+		self._sampleVar.trace( 'w', self._HandleSample )
+		self._sampleConfVar = StringVar()
+		self._sampleConfVar.trace( 'w', self._HandleSampleConf )
 
                 lfrmSampleId = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
-                labelSampleId   = Label( lfrmSampleId, text="sample id:" )
-                entrySampleId   = Entry( lfrmSampleId, textvariable=self._sampleId )
+                labelSampleId = Label( lfrmSampleId, text="sample id:" )
+                self.entrySample = Entry( lfrmSampleId, textvariable=self._sampleVar )
                 labelSampleConf = Label( lfrmSampleId, text="  confirm:" )
-                entrySampleConf = Entry( lfrmSampleId, textvariable=self._sampleIdConf )
+                self.entrySampleConf = Entry( lfrmSampleId, textvariable=self._sampleConfVar )
 
                 lfrmBtn = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
-                btnOK  = Button( lfrmBtn, text="OK", width=16, command=lambda: self.onOkButtonClick( loaderControl, m1Control, m2Control ))
-                #btnClr = Button( lfrmBtn, text="Clear", width=16, command=exit )
-		btnClr = Button( lfrmBtn, text="Clear",  width=16, command=lambda: self.onClearButtonClick( loaderControl, m1Control, m2Control ))
+                btnOK = Button( lfrmBtn, text="OK", width=16, 
+			command=lambda: self.onOkButtonClick( loaderControl, m1Control, m2Control ))
+		btnClr = Button( lfrmBtn, text="Clear",  width=16, 
+			command=lambda: self.onClearButtonClick( loaderControl, m1Control, m2Control ))
 
                 lfrm.grid( row=0, column=1, sticky=NSEW )
                 lfrmOper.grid( row=0, column=0, columnspan=2, sticky=W )
@@ -242,32 +247,76 @@ class LoginControl( object ):
                 lfrmBtn.grid( row=2, column=0 )
 
                 labelOper.grid( row=0, column=0 )
-                entryOper.grid( row=0, column=1, columnspan=2 )
+                self.entryOper.grid( row=0, column=1, columnspan=2 )
 
-                labelAcc.grid( row=1, column=0, sticky=SW )
-                entryAccession.grid( row=1, column=1 )
-                labelAccConf.grid( row=2, column=0, sticky=SW )
-                entryAccConf.grid( row=2, column=1 )
+                labelAccession.grid( row=1, column=0, sticky=SW )
+                self.entryAccession.grid( row=1, column=1 )
+                labelAccessionConf.grid( row=2, column=0, sticky=SW )
+                self.entryAccessionConf.grid( row=2, column=1 )
 
                 labelSampleId.grid( row=3, column=0, sticky=SW )
-                entrySampleId.grid( row=3, column=1 )
+                self.entrySample.grid( row=3, column=1 )
                 labelSampleConf.grid( row=4, column=0, sticky=SW )
-                entrySampleConf.grid( row=4, column=1 )
+                self.entrySampleConf.grid( row=4, column=1 )
 
                 btnOK.grid ( row=0, column=0 )
                 btnClr.grid( row=0, column=1 )
 
+		self._barcodeLen = barcodeLen
+		self._arrivalTime = [None] * barcodeLen
+
+		#print 'barcode len is ', self._barcodeLen
+                self.entryOper.focus_set()
+
 	def _HandleAccession( self, *dummy ):
-		print 'accession: ', self._accession.get()
+		accessionStr = self._accessionVar.get()
+		arrivalIndex = len( accessionStr ) - 1
+
+		# see if this is the first character arriving in the entry widget
+		if arrivalIndex == 0:
+			# this is the first character arriving in the entry widget,
+			# so initialize the arrivalTime array
+			arrivalTime = [None] * self._barcodeLen
+
+		if arrivalIndex >= 0 and arrivalIndex < self._barcodeLen:
+			self._arrivalTime[ arrivalIndex ] = timeit.default_timer()
+
+		if arrivalIndex == self._barcodeLen - 1:
+			# see if a scanner was used to enter the accession number
+			if (( self._arrivalTime[ self._barcodeLen - 1 ] - self._arrivalTime[ 0 ]) < 0.25 ):
+				# looks as though a scanner was used to enter the accession number
+				# disable the accession number confirmation entry widget and 
+				# transfer focus to the sample id entry widget
+				self._accessionConfVar.set( self._accessionVar.get( ))
+				self.entrySample.focus_set( )
 
 	def _HandleAccessionConf( self, *dummy ):
-		print 'accession confirmation changed'
+		print 'accession confirmation: ', self._accessionConfVar.get()
 
-	def _HandleSampleId( self, *dummy ):
-		print 'sample id changed'
+	def _HandleSample( self, *dummy ):
+		sampleStr = self._sampleVar.get()
+		arrivalIndex = len( sampleStr ) - 1
 
-	def _HandleSampleIdConf( self, *dummy ):
-		print 'sample id confirmation changed'
+		# see if this is the first character arriving in the entry widget
+		if arrivalIndex == 0:
+			# this is the first character arriving in the entry widget,
+			# so initialize the arrivalTime array
+			arrivalTime = [None] * self._barcodeLen
+
+		if arrivalIndex >= 0 and arrivalIndex < self._barcodeLen:
+			self._arrivalTime[ arrivalIndex ] = timeit.default_timer()
+
+		if arrivalIndex == self._barcodeLen - 1:
+			# see if a scanner was used to enter the sample ID
+			if (( self._arrivalTime[ self._barcodeLen - 1 ] - self._arrivalTime[ 0 ]) < 0.25 ):
+				# looks as though a scanner was used to enter the accession number
+				# disable the accession number confirmation entry widget and 
+				# transfer focus to the sample id entry widget
+				self._sampleConfVar.set( self._sampleVar.get( ))
+				self.entryOper.focus_set( )
+
+	def _HandleSampleConf( self, *dummy ):
+		print 'sample id confirmation: ', self._sampleConfVar.get()
 
 	def onOkButtonClick( self, loaderControl, m1Control, m2Control ):
                 loaderControl.Enable()
@@ -275,9 +324,25 @@ class LoginControl( object ):
 		m2Control.Enable()
 
 	def onClearButtonClick( self, loaderControl, m1Control, m2Control ):
+		self._arrivalTime = [None] * self._barcodeLen
+
+		self._sampleVar.set("")
+		self._sampleConfVar.set("")
+		self._accessionVar.set("")
+		self._accessionConfVar.set("")
+		self._operVar.set("")
+
+		#self.entryOper.configure( state='normal' )
+		#self.entryAccession.configure( state='disabled' )
+		#self.entryAccessionConf.configure( state='disabled' )
+		#self.entrySample.configure( state='disabled' )
+		#self.entrySampleConf.configure( state='disabled' )
+
                 loaderControl.Disable()
 		m1Control.Disable()
 		m2Control.Disable()
+
+                self.entryOper.focus_set()
 
 class MotorControl( object ):
 	def __init__( self, root, arduinoCmds, arduinoLink, motorNo ):
@@ -379,7 +444,7 @@ def BuildUI( tkRoot, arduinoCmds, debug ):
 	m2Control = MotorControl( frm, arduinoCmds, arduinoLink, 2 )
 	m2Control.Disable()
 
-	loginControl = LoginControl( frm, loaderControl, m1Control, m2Control )
+	loginControl = LoginControl( frm, loaderControl, m1Control, m2Control, int( arduinoCmds["barcodeLen"] ))
 	appControl   = AppControl( frm, arduinoCmds, arduinoLink )
 
 	frm.grid( row=0, column=0, sticky=W )
