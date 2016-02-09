@@ -46,8 +46,8 @@ class AppControl( object ):
 		self._arduinoLink = arduinoLink
 
 		lfrm = LabelFrame( root, padx=10, pady=10, borderwidth=0 )
-		btnStop  = Button( lfrm, text='Stop', width=16, command=lambda: self.onStopButtonClick( ))
-		btnExit  = Button( lfrm, text='Exit', width=16, command=exit )
+		btnStop  = Button( lfrm, text='Stop', height=2, width=16, command=lambda: self.onStopButtonClick( ))
+		btnExit  = Button( lfrm, text='Exit', height=2, width=16, command=exit )
 
 		lfrm.grid( row=3, column=0, sticky=SW )
 		btnExit.grid ( row=0, column=0 )
@@ -129,10 +129,14 @@ class LoaderControl( object ):
 		self._arduinoLink = arduinoLink
 		self._profiles = None
 
-		self._lfrm = LabelFrame( root, text='Load Functions', padx=10, pady=10, borderwidth=0 )
-		btnReset      = Button( self._lfrm, text='Reset',       width=16, command=lambda: self.onResetButtonClick( ))
-		btnFindNeedle = Button( self._lfrm, text='Find Needle', width=16, command=lambda: self.onFindNeedleButtonClick( ))
-		btnStatus     = Button( self._lfrm, text='Status',      width=16, command=lambda: self.onStatusButtonClick( ))
+		self._lfrm = LabelFrame( root, text='Load Functions', 
+			padx=10, pady=10, borderwidth=0 )
+		btnReset = Button( self._lfrm, text='Reset', height=2, width=16, 
+			command=lambda: self.onResetButtonClick( ))
+		btnFindNeedle = Button( self._lfrm, text='Find Needle', height=2, width=16, 
+			command=lambda: self.onFindNeedleButtonClick( ))
+		btnStatus = Button( self._lfrm, text='Status', height=2, width=16, 
+			command=lambda: self.onStatusButtonClick( ))
 
 		try:
 			with open('psdProfiles') as pfile:
@@ -153,8 +157,8 @@ class LoaderControl( object ):
 		self._cbox.current(0)
 		self._cbox.state(['readonly'])
 
-		btnLoad = Button( self._lfrm, text='Load', width=16, command=lambda: self.btnLoad_click( ))
-		btnGo   = Button( self._lfrm, text='Go',   width=16, command=lambda: self.btnGo_click( ))
+		btnLoad = Button( self._lfrm, text='Load', height=2, width=16, command=lambda: self.btnLoad_click( ))
+		btnGo = Button( self._lfrm, text='Go', height=2, width=16, command=lambda: self.btnGo_click( ))
 
 		self._lfrm.grid   ( row=0, column=0, sticky='nw' )
 		btnReset.grid     ( row=0, column=0 )
@@ -209,35 +213,37 @@ class LoginControl( object ):
 		
                 lfrmOper = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
                 labelOper = Label( lfrmOper, text="     operator:" )
-                self.entryOper = Entry( lfrmOper, textvariable=self._operVar )
+                self.entryOper = Entry( lfrmOper, textvariable=self._operVar, font=( 'Calibri', 14 ))
 
 		self._accessionVar = StringVar()
 		self._accessionVar.trace( 'w', self._HandleAccession )
 		self._accessionConfVar = StringVar()
 		self._accessionConfVar.trace( 'w', self._HandleAccessionConf )
 
-                lfrmAcc = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
+                #lfrmAcc = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
+                lfrmAcc = LabelFrame( lfrm, padx=8, pady=8, borderwidth=0 ) 
                 labelAccession      = Label( lfrmAcc, text="accession id:" )
-                self.entryAccession = Entry( lfrmAcc, textvariable=self._accessionVar )
+                self.entryAccession = Entry( lfrmAcc, textvariable=self._accessionVar, font=( 'Calibri', 14 ))
 
                 labelAccessionConf      = Label( lfrmAcc, text="     confirm:" )
-                self.entryAccessionConf = Entry( lfrmAcc, textvariable=self._accessionConfVar )
+                self.entryAccessionConf = Entry( lfrmAcc, textvariable=self._accessionConfVar, font=( 'Calibri', 14 ))
 
 		self._sampleVar = StringVar()
 		self._sampleVar.trace( 'w', self._HandleSample )
 		self._sampleConfVar = StringVar()
 		self._sampleConfVar.trace( 'w', self._HandleSampleConf )
 
-                lfrmSampleId = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
+                #lfrmSampleId = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
+                lfrmSampleId = LabelFrame( lfrm, padx=8, pady=8, borderwidth=0 ) 
                 labelSampleId = Label( lfrmSampleId, text="sample id:" )
-                self.entrySample = Entry( lfrmSampleId, textvariable=self._sampleVar )
+                self.entrySample = Entry( lfrmSampleId, textvariable=self._sampleVar, font=( 'Calibri', 14 ))
                 labelSampleConf = Label( lfrmSampleId, text="  confirm:" )
-                self.entrySampleConf = Entry( lfrmSampleId, textvariable=self._sampleConfVar )
+                self.entrySampleConf = Entry( lfrmSampleId, textvariable=self._sampleConfVar, font=( 'Calibri', 14 ))
 
                 lfrmBtn = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
-                btnOK = Button( lfrmBtn, text="OK", width=16, 
+                btnOK = Button( lfrmBtn, text="OK", height=2, width=16, 
 			command=lambda: self.onOkButtonClick( loaderControl, m1Control, m2Control ))
-		btnClr = Button( lfrmBtn, text="Clear",  width=16, 
+		btnClr = Button( lfrmBtn, text="Clear", height=2, width=16, 
 			command=lambda: self.onClearButtonClick( loaderControl, m1Control, m2Control ))
 
                 lfrm.grid( row=0, column=1, sticky=NSEW )
@@ -319,6 +325,26 @@ class LoginControl( object ):
 		print 'sample id confirmation: ', self._sampleConfVar.get()
 
 	def onOkButtonClick( self, loaderControl, m1Control, m2Control ):
+		operStr = self._operVar.get()
+		print '<', operStr, '>'
+
+		accessionStr = self._accessionVar.get()
+		accessionConfStr = self._accessionConfVar.get()
+		print '<', accessionStr, '> <', accessionConfStr, '>'
+
+		sampleStr = self._sampleVar.get()
+		sampleConfStr = self._sampleVar.get()
+		print '<', sampleStr, '> <', sampleConfStr, '>'
+		
+		if( operStr == "" ):
+			return
+
+		if( accessionStr == "" ) or ( accessionStr != accessionConfStr ):
+			return
+
+		if( sampleStr == "" ) or ( sampleStr != sampleConfStr ):
+			return
+		
                 loaderControl.Enable()
 		m1Control.Enable()
 		m2Control.Enable()
@@ -359,28 +385,28 @@ class MotorControl( object ):
 
 		self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
 
-		btnHome = Button( self._lfrm, text='Home', width=16, 
+		btnHome = Button( self._lfrm, text='Home', height=2, width=16, 
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["movelong"] ))
 
-		btnLimit = Button( self._lfrm, text='Limit', width=16, 
+		btnLimit = Button( self._lfrm, text='Limit', height=2, width=16, 
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["movelong"] ))
 
-		btnStepFwd = Button( self._lfrm, text='Step fwd', width=16, 
+		btnStepFwd = Button( self._lfrm, text='Step fwd', height=2, width=16, 
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["moveshort"] ))
 
-		btnStepRvs = Button( self._lfrm, text='Step rvs', width=16, 
+		btnStepRvs = Button( self._lfrm, text='Step rvs', height=2, width=16, 
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["moveshort"] ))
 
-		btnJogFwdStart = Button( self._lfrm, text='Jog fwd start', width=16, 
+		btnJogFwdStart = Button( self._lfrm, text='Jog fwd start', height=2, width=16, 
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["jogstart"] ))
 
-		btnJogFwdStop = Button( self._lfrm, text='Jog fwd stop', width=16, 
+		btnJogFwdStop = Button( self._lfrm, text='Jog fwd stop', height=2, width=16, 
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["jogstop"] ))
 
-		btnJogRvsStart = Button( self._lfrm, text='Jog rvs start', width=16, 
+		btnJogRvsStart = Button( self._lfrm, text='Jog rvs start', height=2, width=16, 
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["jogstart"] ))
 
-		btnJogRvsStop = Button( self._lfrm, text='Jog rvs stop', width=16, 
+		btnJogRvsStop = Button( self._lfrm, text='Jog rvs stop', height=2, width=16, 
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["jogstop"] ))
 
 		self._lfrm.grid( row=self._motorNo, column=0, sticky='nw' )
@@ -414,7 +440,7 @@ class TraceControl( object ):
 		self._textwidget.config( yscrollcommand=sbTrace.set )
 		sbTrace.config( command=self._textwidget.yview )
 
-		btnClear = Button( lfrm, text='Clear', width=16, command=lambda: self.onClearButtonClick( ))
+		btnClear = Button( lfrm, text='Clear', height=2, width=16, command=lambda: self.onClearButtonClick( ))
 
 		lfrm.grid( row=1, column=1, rowspan=3, sticky='nsew' )
 		lfrm.grid_rowconfigure( 0, weight=1 )
