@@ -221,7 +221,7 @@ class LoginControl( object ):
 		self._accessionConfVar.trace( 'w', self._HandleAccessionConf )
 
                 #lfrmAcc = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
-                lfrmAcc = LabelFrame( lfrm, padx=8, pady=8, borderwidth=0 ) 
+                lfrmAcc = LabelFrame( lfrm, padx=10, pady=8, borderwidth=0 ) 
                 labelAccession      = Label( lfrmAcc, text="accession id:" )
                 self.entryAccession = Entry( lfrmAcc, textvariable=self._accessionVar, font=( 'Calibri', 14 ))
 
@@ -234,7 +234,7 @@ class LoginControl( object ):
 		self._sampleConfVar.trace( 'w', self._HandleSampleConf )
 
                 #lfrmSampleId = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
-                lfrmSampleId = LabelFrame( lfrm, padx=8, pady=8, borderwidth=0 ) 
+                lfrmSampleId = LabelFrame( lfrm, padx=10, pady=8, borderwidth=0 ) 
                 labelSampleId = Label( lfrmSampleId, text="sample id:" )
                 self.entrySample = Entry( lfrmSampleId, textvariable=self._sampleVar, font=( 'Calibri', 14 ))
                 labelSampleConf = Label( lfrmSampleId, text="  confirm:" )
