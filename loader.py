@@ -271,7 +271,6 @@ class LoginControl( object ):
 		self._barcodeLen = barcodeLen
 		self._arrivalTime = [None] * barcodeLen
 
-		#print 'barcode len is ', self._barcodeLen
                 self.entryOper.focus_set()
 
 	def _HandleAccession( self, *dummy ):
@@ -297,7 +296,8 @@ class LoginControl( object ):
 				self.entrySample.focus_set( )
 
 	def _HandleAccessionConf( self, *dummy ):
-		print 'accession confirmation: ', self._accessionConfVar.get()
+		#print 'accession confirmation: ', self._accessionConfVar.get()
+		pass
 
 	def _HandleSample( self, *dummy ):
 		sampleStr = self._sampleVar.get()
@@ -322,32 +322,28 @@ class LoginControl( object ):
 				self.entryOper.focus_set( )
 
 	def _HandleSampleConf( self, *dummy ):
-		print 'sample id confirmation: ', self._sampleConfVar.get()
+		#print 'sample id confirmation: ', self._sampleConfVar.get()
+		pass
 
 	def onOkButtonClick( self, loaderControl, m1Control, m2Control ):
 		operStr = self._operVar.get()
-		print '<', operStr, '>'
 
 		accessionStr = self._accessionVar.get()
 		accessionConfStr = self._accessionConfVar.get()
-		print '<', accessionStr, '> <', accessionConfStr, '>'
 
 		sampleStr = self._sampleVar.get()
 		sampleConfStr = self._sampleVar.get()
-		print '<', sampleStr, '> <', sampleConfStr, '>'
 		
-		if( operStr == "" ):
-			return
-
-		if( accessionStr == "" ) or ( accessionStr != accessionConfStr ):
-			return
-
-		if( sampleStr == "" ) or ( sampleStr != sampleConfStr ):
-			return
-		
-                loaderControl.Enable()
-		m1Control.Enable()
-		m2Control.Enable()
+		if(( operStr == "" ) 
+		or ( accessionStr == "" ) or ( accessionStr != accessionConfStr ) 
+		or ( sampleStr == "" ) or ( sampleStr != sampleConfStr )):
+			loaderControl.Disable()
+			m1Control.Disable()
+			m2Control.Disable()
+		else:
+                	loaderControl.Enable()
+			m1Control.Enable()
+			m2Control.Enable()
 
 	def onClearButtonClick( self, loaderControl, m1Control, m2Control ):
 		self._arrivalTime = [None] * self._barcodeLen
@@ -357,12 +353,6 @@ class LoginControl( object ):
 		self._accessionVar.set("")
 		self._accessionConfVar.set("")
 		self._operVar.set("")
-
-		#self.entryOper.configure( state='normal' )
-		#self.entryAccession.configure( state='disabled' )
-		#self.entryAccessionConf.configure( state='disabled' )
-		#self.entrySample.configure( state='disabled' )
-		#self.entrySampleConf.configure( state='disabled' )
 
                 loaderControl.Disable()
 		m1Control.Disable()
