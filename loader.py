@@ -24,8 +24,8 @@
 # LoaderControl encapsulates the widgets used to execute sample loading 
 # functions.
 #
-# The AppControl class provides UI mechanisms for executing Reset, Status,
-# Find Needle, selecting a profile, uploading a profile, and executing a 
+# The AppControl class provides UI mechanisms for executing Status, Find
+# Needle, selecting a profile, uploading a profile, and executing a 
 # profile.
 # 
 # The AppControl class includes a pair of buttons; one for stopping the arduino, 
@@ -131,8 +131,6 @@ class LoaderControl( object ):
 
 		self._lfrm = LabelFrame( root, text='Load Functions', 
 			padx=10, pady=10, borderwidth=0 )
-		btnReset = Button( self._lfrm, text='Reset', height=2, width=16, 
-			command=lambda: self.onResetButtonClick( ))
 		btnFindNeedle = Button( self._lfrm, text='Find Needle', height=2, width=16, 
 			command=lambda: self.onFindNeedleButtonClick( ))
 		btnStatus = Button( self._lfrm, text='Status', height=2, width=16, 
@@ -161,12 +159,11 @@ class LoaderControl( object ):
 		btnGo = Button( self._lfrm, text='Go', height=2, width=16, command=lambda: self.btnGo_click( ))
 
 		self._lfrm.grid   ( row=0, column=0, sticky='nw' )
-		btnReset.grid     ( row=0, column=0 )
-		btnFindNeedle.grid( row=1, column=0 )
+		btnFindNeedle.grid( row=0, column=0 )
 		btnStatus.grid    ( row=0, column=1 )
-		self._cbox.grid   ( row=2, column=0 )
-		btnLoad.grid      ( row=2, column=1 )
-		btnGo.grid        ( row=3, column=1 )
+		self._cbox.grid   ( row=1, column=0 )
+		btnLoad.grid      ( row=1, column=1 )
+		btnGo.grid        ( row=2, column=1 )
 
 	def onFindNeedleButtonClick( self ):
 		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["findneedle"] )
@@ -189,10 +186,6 @@ class LoaderControl( object ):
 				# give the arduino time to respond
 				#time.sleep( 1.0 )
 				self._arduinoLink.Send( selectedProfile[0]["m2"] )
-
-	def onResetButtonClick( self ):
-		self._arduinoLink.Send( self._arduinoCmds["m1"]["reverse"]["movelong"] )
-		self._arduinoLink.Send( self._arduinoCmds["m2"]["reverse"]["movelong"] )
 
 	def onStatusButtonClick( self ):
 		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["status"] )
@@ -334,25 +327,27 @@ class LoginControl( object ):
 		sampleStr = self._sampleVar.get()
 		sampleConfStr = self._sampleConfVar.get()
 		
-		if( operStr == "" ):
-			#print 'no operator name'
+		if(( operStr == "" )
+		or ( accessionStr == "" ) or ( accessionStr != accessionConfStr )
+		or ( sampleStr == "" ) or ( sampleStr != sampleConfStr )):
 			loaderControl.Disable()
 			m1Control.Disable()
 			m2Control.Disable()
-		elif( accessionStr == "" ) or ( accessionStr != accessionConfStr ):
-			#print 'missing or mismatched accession number'
-			loaderControl.Disable()
-			m1Control.Disable()
-			m2Control.Disable()
-		elif( sampleStr == "" ) or ( sampleStr != sampleConfStr ):
-			#print 'missing or mismatched sample id'
-			loaderControl.Disable()
-			m1Control.Disable()
-			m2Control.Disable()
-		else:
-                	loaderControl.Enable()
-			m1Control.Enable()
-			m2Control.Enable()
+			return
+
+		#LogSessionInfo()
+
+               	loaderControl.Enable()
+		m1Control.Enable()
+		m2Control.Enable()
+
+	def LogSessionInfo( self ):
+		################################
+		#
+		#
+		#
+		################################
+		pass
 
 	def onClearButtonClick( self, loaderControl, m1Control, m2Control ):
 		self._arrivalTime = [None] * self._barcodeLen
@@ -384,18 +379,6 @@ class MotorControl( object ):
 
 		self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
 
-		btnHome = Button( self._lfrm, text='Home', height=2, width=16, 
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["movelong"] ))
-
-		btnLimit = Button( self._lfrm, text='Limit', height=2, width=16, 
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["movelong"] ))
-
-		btnStepFwd = Button( self._lfrm, text='Step fwd', height=2, width=16, 
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["moveshort"] ))
-
-		btnStepRvs = Button( self._lfrm, text='Step rvs', height=2, width=16, 
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["moveshort"] ))
-
 		btnJogFwdStart = Button( self._lfrm, text='Jog fwd start', height=2, width=16, 
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["jogstart"] ))
 
@@ -409,17 +392,12 @@ class MotorControl( object ):
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["jogstop"] ))
 
 		self._lfrm.grid( row=self._motorNo, column=0, sticky='nw' )
-		btnHome.grid   ( row=0, column=0 )
-		btnLimit.grid  ( row=0, column=1 )
 
-		btnStepRvs.grid( row=1, column=0 )
-		btnStepFwd.grid( row=1, column=1 )
+		btnJogFwdStart.grid( row=0, column=0 )
+		btnJogFwdStop.grid ( row=0, column=1 )
 
-		btnJogFwdStart.grid( row=2, column=0 )
-		btnJogFwdStop.grid ( row=2, column=1 )
-
-		btnJogRvsStart.grid( row=3, column=0 )
-		btnJogRvsStop.grid ( row=3, column=1 )
+		btnJogRvsStart.grid( row=1, column=0 )
+		btnJogRvsStop.grid ( row=1, column=1 )
 
 	def Disable( self ):
 		for child in self._lfrm.winfo_children():
