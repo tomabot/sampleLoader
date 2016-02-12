@@ -332,11 +332,20 @@ class LoginControl( object ):
 		accessionConfStr = self._accessionConfVar.get()
 
 		sampleStr = self._sampleVar.get()
-		sampleConfStr = self._sampleVar.get()
+		sampleConfStr = self._sampleConfVar.get()
 		
-		if(( operStr == "" ) 
-		or ( accessionStr == "" ) or ( accessionStr != accessionConfStr ) 
-		or ( sampleStr == "" ) or ( sampleStr != sampleConfStr )):
+		if( operStr == "" ):
+			#print 'no operator name'
+			loaderControl.Disable()
+			m1Control.Disable()
+			m2Control.Disable()
+		elif( accessionStr == "" ) or ( accessionStr != accessionConfStr ):
+			#print 'missing or mismatched accession number'
+			loaderControl.Disable()
+			m1Control.Disable()
+			m2Control.Disable()
+		elif( sampleStr == "" ) or ( sampleStr != sampleConfStr ):
+			#print 'missing or mismatched sample id'
 			loaderControl.Disable()
 			m1Control.Disable()
 			m2Control.Disable()
