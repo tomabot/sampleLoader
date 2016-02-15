@@ -84,10 +84,10 @@ class ArduinoLink( object ):
 				self._trace._textwidget.config( state='normal' )
 
 				# write the message received from the arduino to the textwidget
-				self._trace._textwidget.insert( END, self._conn.read( bytesToRead ))
+				self._trace._textwidget.insert( END, '<<<' + self._conn.read( bytesToRead ) + '\n' )
 
 				# write a newline to end the message
-				self._trace._textwidget.insert( END, '\n' )
+				#self._trace._textwidget.insert( END, '\n' )
 
 				# scroll the textwidget to the end so you can see it
 				self._trace._textwidget.see( END )
@@ -103,7 +103,7 @@ class ArduinoLink( object ):
 		self._trace._textwidget.config( state='normal' )
 
 		# write the command to the trace window
-		self._trace._textwidget.insert( END, cmd + '\n' )
+		self._trace._textwidget.insert( END, '>>>' + cmd + '\n' )
 
 		if( self._debug == False ):
 			# write the command to the arduino
@@ -216,10 +216,10 @@ class LoginControl( object ):
                 #lfrmAcc = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
                 lfrmAcc = LabelFrame( lfrm, padx=10, pady=8, borderwidth=0 ) 
                 labelAccession      = Label( lfrmAcc, text="accession id:" )
-                self.entryAccession = Entry( lfrmAcc, textvariable=self._accessionVar, font=( 'Calibri', 14 ))
+                self.entryAccession = Entry( lfrmAcc, width="14", textvariable=self._accessionVar, font=( 'Calibri', 14 ))
 
                 labelAccessionConf      = Label( lfrmAcc, text="     confirm:" )
-                self.entryAccessionConf = Entry( lfrmAcc, textvariable=self._accessionConfVar, font=( 'Calibri', 14 ))
+                self.entryAccessionConf = Entry( lfrmAcc, width="14", textvariable=self._accessionConfVar, font=( 'Calibri', 14 ))
 
 		self._sampleVar = StringVar()
 		self._sampleVar.trace( 'w', self._HandleSample )
@@ -229,9 +229,9 @@ class LoginControl( object ):
                 #lfrmSampleId = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
                 lfrmSampleId = LabelFrame( lfrm, padx=10, pady=8, borderwidth=0 ) 
                 labelSampleId = Label( lfrmSampleId, text="sample id:" )
-                self.entrySample = Entry( lfrmSampleId, textvariable=self._sampleVar, font=( 'Calibri', 14 ))
+                self.entrySample = Entry( lfrmSampleId, width="14", textvariable=self._sampleVar, font=( 'Calibri', 14 ))
                 labelSampleConf = Label( lfrmSampleId, text="  confirm:" )
-                self.entrySampleConf = Entry( lfrmSampleId, textvariable=self._sampleConfVar, font=( 'Calibri', 14 ))
+                self.entrySampleConf = Entry( lfrmSampleId, width="14", textvariable=self._sampleConfVar, font=( 'Calibri', 14 ))
 
                 lfrmBtn = LabelFrame( lfrm, padx=10, pady=10, borderwidth=0 ) 
                 btnOK = Button( lfrmBtn, text="OK", height=2, width=16, 
@@ -319,7 +319,7 @@ class LoginControl( object ):
 		pass
 
 	def onOkButtonClick( self, loaderControl, m1Control, m2Control ):
-		operStr = self._operVar.get()
+		operatorStr = self._operVar.get()
 
 		accessionStr = self._accessionVar.get()
 		accessionConfStr = self._accessionConfVar.get()
@@ -327,7 +327,7 @@ class LoginControl( object ):
 		sampleStr = self._sampleVar.get()
 		sampleConfStr = self._sampleConfVar.get()
 		
-		if(( operStr == "" )
+		if(( operatorStr == "" )
 		or ( accessionStr == "" ) or ( accessionStr != accessionConfStr )
 		or ( sampleStr == "" ) or ( sampleStr != sampleConfStr )):
 			loaderControl.Disable()
@@ -335,18 +335,19 @@ class LoginControl( object ):
 			m2Control.Disable()
 			return
 
-		#LogSessionInfo()
+		self.LogSessionInfo( operatorStr, sampleStr, accessionStr )
 
                	loaderControl.Enable()
 		m1Control.Enable()
 		m2Control.Enable()
 
-	def LogSessionInfo( self ):
-		################################
+	def LogSessionInfo( self, operatorStr, sampleStr, accessionStr ):
+		####################################################
 		#
+		# this is where the operator name, sample
+		# id, and accession id should be logged
 		#
-		#
-		################################
+		####################################################
 		pass
 
 	def onClearButtonClick( self, loaderControl, m1Control, m2Control ):
