@@ -39,6 +39,10 @@ import serial
 import json
 import time
 import timeit
+import datetime
+
+from optparse import OptionParser
+
 
 class AppControl( object ):
 	def __init__( self, root, arduinoCmds, arduinoLink ):
@@ -59,10 +63,11 @@ class AppControl( object ):
 # ArduinoLink encapsulates the serial port connection and the 
 # trace control.
 class ArduinoLink( object ):
-	def __init__( self, root, arduinoCmds, debug ): 
+	def __init__( self, root, arduinoCmds, logFileName, debug ): 
 		self._root = root
 		self._debug = debug
 		self._conn = None
+		self._logFileName = logFileName
 
 		try:
 			if( debug == False ):
@@ -84,7 +89,8 @@ class ArduinoLink( object ):
 				self._trace._textwidget.config( state='normal' )
 
 				# write the message received from the arduino to the textwidget
-				self._trace._textwidget.insert( END, '<<<' + self._conn.read( bytesToRead ) + '\n' )
+				arduinoStr = self._conn.read( bytesToRead )
+				self._trace._textwidget.insert( END, '<<<' + arduinoStr + '\n' )
 
 				# write a newline to end the message
 				#self._trace._textwidget.insert( END, '\n' )
@@ -95,10 +101,19 @@ class ArduinoLink( object ):
 				# disable the text widget so it's read-only
 				self._trace._textwidget.config( state='disabled' )
 
+				logEntry = ''.join([ datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f "), arduinoStr ])
+				with open(self._logFileName, 'a') as logFile:
+					print >>logFile, logEntry
+
+
 		# reset the idle event timer
 		self._root.after( 100, self.Tick )
 
 	def Send( self, cmd ):
+		logEntry = ''.join([ datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f "), cmd ])
+		with open(self._logFileName, 'a') as logFile:
+			print >>logFile, logEntry
+
 		# enable the trace window for writing
 		self._trace._textwidget.config( state='normal' )
 
@@ -199,7 +214,9 @@ class LoaderControl( object ):
 			child.configure(state='normal')
 
 class LoginControl( object ):
-        def __init__( self, root, loaderControl, m1Control, m2Control, barcodeLen ):
+        def __init__( self, root, loaderControl, m1Control, m2Control, logFileName, barcodeLen ):
+		self._logFileName = logFileName
+
                 lfrm = LabelFrame( root, text='Log Control', padx=10, pady=10, borderwidth=0 )
 
 		self._operVar = StringVar()
@@ -348,7 +365,15 @@ class LoginControl( object ):
 		# id, and accession id should be logged
 		#
 		####################################################
-		pass
+
+		logEntry = ''.join([
+			datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+			" operator=", operatorStr, 
+			" sample=", sampleStr, 
+			" accession=", accessionStr ])
+
+		with open(self._logFileName, 'a') as logFile:
+			print >>logFile, logEntry
 
 	def onClearButtonClick( self, loaderControl, m1Control, m2Control ):
 		self._arrivalTime = [None] * self._barcodeLen
@@ -409,6 +434,7 @@ class MotorControl( object ):
 			child.configure(state='normal')
 
 class TraceControl( object ):
+# datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
 	def __init__( self, root ):
 		lfrm = LabelFrame( root, text='Trace', padx=10, pady=10, borderwidth=0 )
 		self._textwidget = Text( lfrm, borderwidth=1 )
@@ -434,10 +460,10 @@ class TraceControl( object ):
 		self._textwidget.delete( '1.0', END )
 		self._textwidget.config( state='disabled' )
 
-def BuildUI( tkRoot, arduinoCmds, debug ):
+def BuildUI( tkRoot, arduinoCmds, logFileName, debug ):
 	frm = Frame( tkRoot, padx=10, pady=10 )
 
-	arduinoLink = ArduinoLink( frm, arduinoCmds, debug )
+	arduinoLink = ArduinoLink( frm, arduinoCmds, logFileName, debug )
 
 	loaderControl = LoaderControl( frm, arduinoCmds, arduinoLink )
 	loaderControl.Disable()
@@ -448,7 +474,7 @@ def BuildUI( tkRoot, arduinoCmds, debug ):
 	m2Control = MotorControl( frm, arduinoCmds, arduinoLink, 2 )
 	m2Control.Disable()
 
-	loginControl = LoginControl( frm, loaderControl, m1Control, m2Control, int( arduinoCmds["barcodeLen"] ))
+	loginControl = LoginControl( frm, loaderControl, m1Control, m2Control, logFileName, int( arduinoCmds["barcodeLen"] ))
 	appControl   = AppControl( frm, arduinoCmds, arduinoLink )
 
 	frm.grid( row=0, column=0, sticky=W )
@@ -466,13 +492,24 @@ def LoadArduinoCommands( ):
 		raise
 	return pdata
 
-def RunningInDebugMode( ):
-	for arg in sys.argv:
-		if( arg == '--debug' ) or ( arg == '-d' ):
-			return True
-	return False
+class RunTimeConfig( object ):
+	def __init__( self ):
+	
+		parser = OptionParser()
+		parser.add_option( '-l', '--logfile', dest='logfilename', action='store', default='psd.log', help='log file' )
+		parser.add_option( '-d', '--debug', dest='debug', action='store_true', default=False, help='debug mode' )
+		(options, args) = parser.parse_args()
 
-debug = RunningInDebugMode()
-root = BuildUI( Tk( ), LoadArduinoCommands(), debug )
+		self._logfilename = options.logfilename
+		self._debug = options.debug
+
+	def LogFileName( self ):
+		return self._logfilename
+
+	def Debug( self ):
+		return self._debug
+
+config = RunTimeConfig()
+root = BuildUI( Tk( ), LoadArduinoCommands(), config.LogFileName(), config.Debug() )
 root.mainloop()
 
