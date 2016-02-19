@@ -101,6 +101,7 @@ class ArduinoLink( object ):
 				# disable the text widget so it's read-only
 				self._trace._textwidget.config( state='disabled' )
 
+				# Log arduino responses 
 				logEntry = ''.join([ datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f "), arduinoStr ])
 				with open(self._logFileName, 'a') as logFile:
 					print >>logFile, logEntry
@@ -110,6 +111,7 @@ class ArduinoLink( object ):
 		self._root.after( 100, self.Tick )
 
 	def Send( self, cmd ):
+		# Log commands to the arduino 
 		logEntry = ''.join([ datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f "), cmd ])
 		with open(self._logFileName, 'a') as logFile:
 			print >>logFile, logEntry
@@ -359,13 +361,7 @@ class LoginControl( object ):
 		m2Control.Enable()
 
 	def LogSessionInfo( self, operatorStr, sampleStr, accessionStr ):
-		####################################################
-		#
-		# this is where the operator name, sample
-		# id, and accession id should be logged
-		#
-		####################################################
-
+		# Log operator name, sample id, and accession id 
 		logEntry = ''.join([
 			datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
 			" operator=", operatorStr, 
