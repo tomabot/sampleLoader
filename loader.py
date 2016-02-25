@@ -43,7 +43,6 @@ import datetime
 
 from optparse import OptionParser
 
-
 class AppControl( object ):
 	def __init__( self, root, arduinoCmds, arduinoLink ):
 		self._arduinoCmds = arduinoCmds
@@ -69,6 +68,13 @@ class ArduinoLink( object ):
 		self._conn = None
 		self._logFileName = logFileName
 
+		self._loaderControl = None
+		self._m1Control = None
+		self._m2Control = None
+
+		self._timer = 0
+		self._timerActive = False
+		
 		try:
 			if( debug == False ):
 				self._conn = serial.Serial( 
@@ -79,7 +85,14 @@ class ArduinoLink( object ):
 		except:
 			print "Error opening com port:", sys.exc_info()[0]
 			raise 
-	
+
+	def SetUpTickFn( self, loaderControl, m1Control, m2Control ):
+		self._loaderControl = loaderControl
+		self._m1Control = m1Control
+		self._m2Control = m2Control
+
+		self.Tick( )
+
 	def Tick( self ):
 		# see if the arduino has written anything to the serial port
 		if( self._debug == False ):
@@ -106,9 +119,29 @@ class ArduinoLink( object ):
 				with open(self._logFileName, 'a') as logFile:
 					print >>logFile, logEntry
 
+		# if we're currently executing a long-running arduino operation, adjust 
+		# the idle event timer quantum from the anticipated duration, and if
+		# the time quantum expires, disable the timer, and reenable the UI
+		if( self._timerActive ) :
+			self._timer = self._timer - 1
+			if( self._timer <= 0 ):
+				self._loaderControl.Enable()
+				self._m1Control.Enable()
+				self._m2Control.Enable()
+				self._timerActive = False
 
-		# reset the idle event timer
+		# re-arm the idle event timer
 		self._root.after( 100, self.Tick )
+
+	def SetTimer( self, duration ):
+		if(( self._loaderControl != None ) and ( self._m1Control != None ) and ( self._m2Control != None )):
+			self._loaderControl.Disable()
+			self._m1Control.Disable()
+			self._m2Control.Disable()
+
+		# duration is in seconds, idle timer is in 100 millisecond steps
+		self._timer = duration 
+		self._timerActive = True
 
 	def Send( self, cmd ):
 		# Log commands to the arduino 
@@ -186,7 +219,15 @@ class LoaderControl( object ):
 		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["findneedle"] )
 
 	def btnGo_click( self ):
-		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["go"] )
+		selectedLabel = self._cbox['values'][self._cbox.current()]
+
+		# find the profile array entry that corresponds to the profile selected in the combo box
+		selectedProfile = [ p for p in self._profiles["profile"] if p["label"] == selectedLabel ]
+
+		if( selectedProfile[0]["time"] != None ):
+			# get the time it takes to execute the profile from the json file entry
+			timerVal = int( selectedProfile[0]["time"] ) * 10
+			self._arduinoLink.SetTimer( timerVal )
 
 	def btnLoad_click( self ):
 		# get the profile label selected in the combo box
@@ -364,6 +405,12 @@ class LoginControl( object ):
 		m1Control.Disable()
 		m2Control.Disable()
 
+		self.entryOper.configure(state='normal')
+		self.entryAccession.configure(state='normal')
+		self.entryAccessionConf.configure(state='normal')
+		self.entrySample.configure(state='normal')
+		self.entrySampleConf.configure(state='normal')
+
                 self.entryOper.focus_set()
 
 	def onEditButtonClick( self, loaderControl, m1Control, m2Control ):
@@ -372,6 +419,12 @@ class LoginControl( object ):
                 loaderControl.Disable()
 		m1Control.Disable()
 		m2Control.Disable()
+
+		self.entryOper.configure(state='normal')
+		self.entryAccession.configure(state='normal')
+		self.entryAccessionConf.configure(state='normal')
+		self.entrySample.configure(state='normal')
+		self.entrySampleConf.configure(state='normal')
 
                 self.entryOper.focus_set()
 
@@ -397,6 +450,12 @@ class LoginControl( object ):
                	loaderControl.Enable()
 		m1Control.Enable()
 		m2Control.Enable()
+
+		self.entryOper.configure(state='disable')
+		self.entryAccession.configure(state='disable')
+		self.entryAccessionConf.configure(state='disable')
+		self.entrySample.configure(state='disable')
+		self.entrySampleConf.configure(state='disable')
 
 	def Disable( self ):
 		for child in self._lfrm.winfo_children():
@@ -494,7 +553,7 @@ def BuildUI( tkRoot, arduinoCmds, logFileName, debug ):
 
 	frm.grid( row=0, column=0, sticky=W )
 
-	arduinoLink.Tick( )
+	arduinoLink.SetUpTickFn( loaderControl, m1Control, m2Control )
 	return frm
 
 def LoadArduinoCommands( ):
