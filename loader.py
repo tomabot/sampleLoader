@@ -164,7 +164,8 @@ class ArduinoLink( object ):
 
 		if( self._debug == False ):
 			# write the command to the arduino
-			self._conn.write( cmd + '=' )
+			outstr = cmd + '='
+			self._conn.write( outstr.encode())
 
 		# scroll the text widget to the end so you can see it
 		self._trace._textwidget.see( END )
@@ -226,11 +227,16 @@ class LoaderControl( object ):
 		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["findneedle"] )
 
 	def btnGo_click( self ):
+		# send the go command to the arduino
+		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["go"] )
+
+		# see how long to leave the UI disabled
 		selectedLabel = self._cbox['values'][self._cbox.current()]
 
 		# find the profile array entry that corresponds to the profile selected in the combo box
 		selectedProfile = [ p for p in self._profiles["profile"] if p["label"] == selectedLabel ]
 
+		# set the timer for leaving the UI disabled
 		if( selectedProfile[0]["time"] != None ):
 			# get the time it takes to execute the profile from the json file entry
 			timerVal = int( selectedProfile[0]["time"] ) * 10

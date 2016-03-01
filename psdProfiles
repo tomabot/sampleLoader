@@ -2,7 +2,7 @@
     "profile" : [
         { 
             "label" : "2uL static disp",
-            "time" : "10",
+            "time" : "215",
             "m1" : "m 1 f 1594 3840 0 0",
             "m2" : null
         },
