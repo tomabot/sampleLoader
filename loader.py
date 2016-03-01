@@ -58,6 +58,7 @@ class AppControl( object ):
 
 	def onStopButtonClick( self ):
 		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["stop"] )
+		self._arduinoLink.EnableUiControls()
 
 # ArduinoLink encapsulates the serial port connection and the 
 # trace control.
@@ -86,7 +87,17 @@ class ArduinoLink( object ):
 			print "Error opening com port:", sys.exc_info()[0]
 			raise 
 
-	def SetUpTickFn( self, loaderControl, m1Control, m2Control ):
+	def DisableUiControls( self ):
+		self._loaderControl.Disable()
+		self._m1Control.Disable()
+		self._m2Control.Disable()
+
+	def EnableUiControls( self ):
+		self._loaderControl.Enable()
+		self._m1Control.Enable()
+		self._m2Control.Enable()
+
+	def InitializeUiStateControl( self, loaderControl, m1Control, m2Control ):
 		self._loaderControl = loaderControl
 		self._m1Control = m1Control
 		self._m2Control = m2Control
@@ -125,9 +136,7 @@ class ArduinoLink( object ):
 		if( self._timerActive ) :
 			self._timer = self._timer - 1
 			if( self._timer <= 0 ):
-				self._loaderControl.Enable()
-				self._m1Control.Enable()
-				self._m2Control.Enable()
+				self.EnableUiControls()
 				self._timerActive = False
 
 		# re-arm the idle event timer
@@ -135,9 +144,7 @@ class ArduinoLink( object ):
 
 	def SetTimer( self, duration ):
 		if(( self._loaderControl != None ) and ( self._m1Control != None ) and ( self._m2Control != None )):
-			self._loaderControl.Disable()
-			self._m1Control.Disable()
-			self._m2Control.Disable()
+			self.DisableUiControls()
 
 		# duration is in seconds, idle timer is in 100 millisecond steps
 		self._timer = duration 
@@ -553,7 +560,7 @@ def BuildUI( tkRoot, arduinoCmds, logFileName, debug ):
 
 	frm.grid( row=0, column=0, sticky=W )
 
-	arduinoLink.SetUpTickFn( loaderControl, m1Control, m2Control )
+	arduinoLink.InitializeUiStateControl( loaderControl, m1Control, m2Control )
 	return frm
 
 def LoadArduinoCommands( ):
