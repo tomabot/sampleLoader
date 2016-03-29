@@ -195,7 +195,7 @@ class LoaderControl( object ):
 			command=lambda: self.onStatusButtonClick( ))
 
 		try:
-			with open('psdProfiles') as pfile:
+			with open('/usr/local/cfg/psdProfiles') as pfile:
 				self._profiles = json.load(pfile)
 		except:
 			# json file with profile definitions was not found
@@ -572,7 +572,7 @@ def BuildUI( tkRoot, arduinoCmds, logFileName, debug ):
 def LoadArduinoCommands( ):
 	pdata = None
 	try:
-		with open('psdCommands') as pfile:
+		with open('/usr/local/cfg/psdCommands') as pfile:
 			pdata = json.load(pfile)
 	except:
 		print "Error opening arduinoCmds command file"
