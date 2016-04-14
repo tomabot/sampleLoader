@@ -583,7 +583,7 @@ class RunTimeConfig( object ):
 	def __init__( self ):
 	
 		parser = OptionParser()
-		parser.add_option( '-l', '--logfile', dest='logfilename', action='store', default='psd.log', help='log file' )
+		parser.add_option( '-l', '--logfile', dest='logfilename', action='store', default='/var/log/psd.log', help='log file' )
 		parser.add_option( '-d', '--debug', dest='debug', action='store_true', default=False, help='debug mode' )
 		(options, args) = parser.parse_args()
 
