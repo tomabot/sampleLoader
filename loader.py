@@ -489,10 +489,10 @@ class MotorControl1( object ):
 		#self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
 		self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
 
-		btnJogFwdStart = Button( self._lfrm, text='Jog Forward', height=2, width=18, repeatdelay=250, repeatinterval=250,
+		btnJogFwdStart = Button( self._lfrm, text='Jog Forward', height=2, width=18, repeatdelay=200, repeatinterval=200,
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]['forward']['jogstart'] ))
 
-		btnJogRvsStart = Button( self._lfrm, text='Jog Reverse', height=2, width=18, 
+		btnJogRvsStart = Button( self._lfrm, text='Jog Reverse', height=2, width=18, repeatdelay=200, repeatinterval=200,
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]['reverse']['jogstart'] ))
 
 		self._lfrm.grid( row=self._motorNo, column=0, sticky='nw' )
@@ -519,10 +519,10 @@ class MotorControl2( object ):
 
 		self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
 
-		btnJogFwdStart = Button( self._lfrm, text='Jog Forward', height=2, width=18, repeatdelay=250, repeatinterval=250,
+		btnJogFwdStart = Button( self._lfrm, text='Jog Forward', height=2, width=18, repeatdelay=200, repeatinterval=200,
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["jogstart"] ))
 
-		btnJogRvsStart = Button( self._lfrm, text='Jog Reverse', height=2, width=18, 
+		btnJogRvsStart = Button( self._lfrm, text='Jog Reverse', height=2, width=18, repeatdelay=200, repeatinterval=200,
 			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["jogstart"] ))
 
 		self._lfrm.grid( row=self._motorNo, column=0, sticky='nw' )
