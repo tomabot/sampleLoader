@@ -478,40 +478,57 @@ class LoginControl( object ):
 		for child in self._lfrm.winfo_children():
 			child.configure(state='normal')
 
-class MotorControl( object ):
-	def __init__( self, root, arduinoCmds, arduinoLink, motorNo ):
+class MotorControl1( object ):
+	def __init__( self, root, arduinoCmds, arduinoLink ):
 		self._arduinoCmds = arduinoCmds
 		self._arduinoLink = arduinoLink
 
-		self._motorNo = motorNo
-		if ( motorNo == 1 ):
-			self._frameText = 'M1 Control'
-			self._motorName= 'm1'
-		else:
-			self._frameText = 'M2 Control'
-			self._motorName= 'm2'
-
+		self._motorNo = 1
+		self._frameText = 'M1 Control'
+		self._motorName= 'm1'
+		#self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
 		self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
 
-		btnJogFwdStart = Button( self._lfrm, text='Jog fwd start', height=2, width=18, 
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["jogstart"] ))
+		btnJogFwdStart = Button( self._lfrm, text='Jog Forward', height=2, width=18, repeatdelay=250, repeatinterval=250,
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]['forward']['jogstart'] ))
 
-		btnJogFwdStop = Button( self._lfrm, text='Jog fwd stop', height=2, width=18, 
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["jogstop"] ))
-
-		btnJogRvsStart = Button( self._lfrm, text='Jog rvs start', height=2, width=18, 
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["jogstart"] ))
-
-		btnJogRvsStop = Button( self._lfrm, text='Jog rvs stop', height=2, width=18, 
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["jogstop"] ))
+		btnJogRvsStart = Button( self._lfrm, text='Jog Reverse', height=2, width=18, 
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]['reverse']['jogstart'] ))
 
 		self._lfrm.grid( row=self._motorNo, column=0, sticky='nw' )
 
 		btnJogFwdStart.grid( row=0, column=0 )
-		btnJogFwdStop.grid ( row=0, column=1 )
+		btnJogRvsStart.grid( row=0, column=1 )
 
-		btnJogRvsStart.grid( row=1, column=0 )
-		btnJogRvsStop.grid ( row=1, column=1 )
+	def Disable( self ):
+		for child in self._lfrm.winfo_children():
+			child.configure(state='disable')
+
+	def Enable( self ):
+		for child in self._lfrm.winfo_children():
+			child.configure(state='normal')
+
+class MotorControl2( object ):
+	def __init__( self, root, arduinoCmds, arduinoLink ):
+		self._arduinoCmds = arduinoCmds
+		self._arduinoLink = arduinoLink
+
+		self._motorNo = 2
+		self._frameText = 'M2 Control'
+		self._motorName= 'm2'
+
+		self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
+
+		btnJogFwdStart = Button( self._lfrm, text='Jog Forward', height=2, width=18, repeatdelay=250, repeatinterval=250,
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["jogstart"] ))
+
+		btnJogRvsStart = Button( self._lfrm, text='Jog Reverse', height=2, width=18, 
+			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["jogstart"] ))
+
+		self._lfrm.grid( row=self._motorNo, column=0, sticky='nw' )
+
+		btnJogFwdStart.grid( row=0, column=0 )
+		btnJogRvsStart.grid( row=0, column=1 )
 
 	def Disable( self ):
 		for child in self._lfrm.winfo_children():
@@ -555,10 +572,10 @@ def BuildUI( tkRoot, arduinoCmds, logFileName, debug ):
 	loaderControl = LoaderControl( frm, arduinoCmds, arduinoLink )
 	loaderControl.Disable()
 
-	m1Control = MotorControl( frm, arduinoCmds, arduinoLink, 1 )
+	m1Control = MotorControl1( frm, arduinoCmds, arduinoLink )
 	m1Control.Disable()
 
-	m2Control = MotorControl( frm, arduinoCmds, arduinoLink, 2 )
+	m2Control = MotorControl2( frm, arduinoCmds, arduinoLink )
 	m2Control.Disable()
 
 	loginControl = LoginControl( frm, loaderControl, m1Control, m2Control, logFileName, int( arduinoCmds["barcodeLen"] ))
