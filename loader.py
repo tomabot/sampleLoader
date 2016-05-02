@@ -486,19 +486,26 @@ class MotorControl1( object ):
 		self._motorNo = 1
 		self._frameText = 'M1 Control'
 		self._motorName= 'm1'
-		#self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
 		self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
 
-		btnJogFwdStart = Button( self._lfrm, text='Jog Forward', height=2, width=18, repeatdelay=200, repeatinterval=200,
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]['forward']['jogstart'] ))
+		self._jogStepCt = DoubleVar()
+		btnJogFwd = Button( self._lfrm, text='Jog Forward', height=2, width=18, 
+			command=lambda: self.onBtnJogFwdClick( ))
 
-		btnJogRvsStart = Button( self._lfrm, text='Jog Reverse', height=2, width=18, repeatdelay=200, repeatinterval=200,
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]['reverse']['jogstart'] ))
+		btnJogRvs = Button( self._lfrm, text='Jog Reverse', height=2, width=18, 
+			command=lambda: self.onBtnJogRvsClick( ))
+
+		scaleJogStepCt = Scale( self._lfrm, variable=self._jogStepCt, 
+			orient=HORIZONTAL, from_='100', to='10000', length=164 )
+
+		labelJogStepCt = Label( self._lfrm, text='Jog Step Count' )
 
 		self._lfrm.grid( row=self._motorNo, column=0, sticky='nw' )
 
-		btnJogFwdStart.grid( row=0, column=0 )
-		btnJogRvsStart.grid( row=0, column=1 )
+		btnJogFwd.grid( row=0, column=0 )
+		btnJogRvs.grid( row=0, column=1 )
+		labelJogStepCt.grid( row=1, column=0 )
+		scaleJogStepCt.grid( row=1, column=1 )
 
 	def Disable( self ):
 		for child in self._lfrm.winfo_children():
@@ -507,6 +514,16 @@ class MotorControl1( object ):
 	def Enable( self ):
 		for child in self._lfrm.winfo_children():
 			child.configure(state='normal')
+
+	def onBtnJogFwdClick( self ):
+		strJogStepCt = str( self._jogStepCt.get( ))
+		jogCmd = self._arduinoLink.Send( self._arduinoCmds['m1']['forward']['jogstart'] + ' ' + strJogStepCt )
+		self._arduinoLink.Send( jogCmd )
+
+	def onBtnJogRvsClick( self ):
+		strJogStepCt = str( self._jogStepCt.get( ))
+		jogCmd = self._arduinoLink.Send( self._arduinoCmds['m1']['reverse']['jogstart'] + ' ' + strJogStepCt )
+		self._arduinoLink.Send( jogCmd )
 
 class MotorControl2( object ):
 	def __init__( self, root, arduinoCmds, arduinoLink ):
@@ -519,16 +536,23 @@ class MotorControl2( object ):
 
 		self._lfrm = LabelFrame( root, text=self._frameText, padx=10, pady=10, borderwidth=0 )
 
-		btnJogFwdStart = Button( self._lfrm, text='Jog Forward', height=2, width=18, repeatdelay=200, repeatinterval=200,
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["forward"]["jogstart"] ))
+		self._jogStepCt = DoubleVar()
+		btnJogFwd = Button( self._lfrm, text='Jog Forward', height=2, width=18, 
+			command=lambda: self.onBtnJogFwdClick( ))
 
-		btnJogRvsStart = Button( self._lfrm, text='Jog Reverse', height=2, width=18, repeatdelay=200, repeatinterval=200,
-			command=lambda: self._arduinoLink.Send( self._arduinoCmds[self._motorName]["reverse"]["jogstart"] ))
+		btnJogRvs = Button( self._lfrm, text='Jog Reverse', height=2, width=18, 
+			command=lambda: self.onBtnJogRvsClick( ))
+
+		scaleJogStepCt = Scale( self._lfrm, variable=self._jogStepCt,
+			orient=HORIZONTAL, from_='100', to='10000', length=164 )
+		labelJogStepCt = Label( self._lfrm, text='Jog Step Count' )
 
 		self._lfrm.grid( row=self._motorNo, column=0, sticky='nw' )
 
-		btnJogFwdStart.grid( row=0, column=0 )
-		btnJogRvsStart.grid( row=0, column=1 )
+		btnJogFwd.grid( row=0, column=0 )
+		btnJogRvs.grid( row=0, column=1 )
+		labelJogStepCt.grid( row=1, column=0 )
+		scaleJogStepCt.grid( row=1, column=1 )
 
 	def Disable( self ):
 		for child in self._lfrm.winfo_children():
@@ -537,6 +561,16 @@ class MotorControl2( object ):
 	def Enable( self ):
 		for child in self._lfrm.winfo_children():
 			child.configure(state='normal')
+
+	def onBtnJogFwdClick( self ):
+		strJogStepCt = str( self._jogStepCt.get( ))
+		jogCmd = self._arduinoLink.Send( self._arduinoCmds['m2']['forward']['jogstart'] + ' ' + strJogStepCt )
+		self._arduinoLink.Send( jogCmd )
+
+	def onBtnJogRvsClick( self ):
+		strJogStepCt = str( self._jogStepCt.get( ))
+		jogCmd = self._arduinoLink.Send( self._arduinoCmds['m2']['reverse']['jogstart'] + ' ' + strJogStepCt )
+		self._arduinoLink.Send( jogCmd )
 
 class TraceControl( object ):
 	def __init__( self, root ):
