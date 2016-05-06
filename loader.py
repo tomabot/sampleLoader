@@ -517,12 +517,12 @@ class MotorControl1( object ):
 
 	def onBtnJogFwdClick( self ):
 		strJogStepCt = str( self._jogStepCt.get( ))
-		jogCmd = self._arduinoLink.Send( self._arduinoCmds['m1']['forward']['jogstart'] + ' ' + strJogStepCt )
+		jogCmd = self._arduinoCmds['m1']['forward']['jogstart'] + ' ' + strJogStepCt
 		self._arduinoLink.Send( jogCmd )
 
 	def onBtnJogRvsClick( self ):
 		strJogStepCt = str( self._jogStepCt.get( ))
-		jogCmd = self._arduinoLink.Send( self._arduinoCmds['m1']['reverse']['jogstart'] + ' ' + strJogStepCt )
+		jogCmd = self._arduinoCmds['m1']['reverse']['jogstart'] + ' ' + strJogStepCt
 		self._arduinoLink.Send( jogCmd )
 
 class MotorControl2( object ):
@@ -564,12 +564,12 @@ class MotorControl2( object ):
 
 	def onBtnJogFwdClick( self ):
 		strJogStepCt = str( self._jogStepCt.get( ))
-		jogCmd = self._arduinoLink.Send( self._arduinoCmds['m2']['forward']['jogstart'] + ' ' + strJogStepCt )
+		jogCmd = self._arduinoCmds['m2']['forward']['jogstart'] + ' ' + strJogStepCt
 		self._arduinoLink.Send( jogCmd )
 
 	def onBtnJogRvsClick( self ):
 		strJogStepCt = str( self._jogStepCt.get( ))
-		jogCmd = self._arduinoLink.Send( self._arduinoCmds['m2']['reverse']['jogstart'] + ' ' + strJogStepCt )
+		jogCmd = self._arduinoCmds['m2']['reverse']['jogstart'] + ' ' + strJogStepCt
 		self._arduinoLink.Send( jogCmd )
 
 class TraceControl( object ):
