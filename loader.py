@@ -512,8 +512,9 @@ class MotorControl1( object ):
 			child.configure(state='disable')
 
 	def Enable( self ):
-		for child in self._lfrm.winfo_children():
-			child.configure(state='normal')
+		pass
+		#for child in self._lfrm.winfo_children():
+		#	child.configure(state='normal')
 
 	def onBtnJogFwdClick( self ):
 		strJogStepCt = str( self._jogStepCt.get( ))
