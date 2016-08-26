@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 # This program provides the user interface to the precision sample dispenser 
 # control software executing on an arduino. The commands that are understood
@@ -33,6 +33,7 @@
 
 from Tkinter import *
 import tkFileDialog
+import tkMessageBox
 import ttk
 
 import serial 
@@ -66,8 +67,10 @@ class ArduinoLink( object ):
 	def __init__( self, root, arduinoCmds, logFileName, debug ): 
 		self._root = root
 		self._debug = debug
-		self._conn = None
 		self._logFileName = logFileName
+
+		self._conn = None
+		self._trace = None
 
 		self._loaderControl = None
 		self._m1Control = None
@@ -78,14 +81,19 @@ class ArduinoLink( object ):
 		
 		try:
 			if( debug == False ):
-				self._conn = serial.Serial( 
-					arduinoCmds["com"]["port"], 
-					int( arduinoCmds["com"]["baud"]), 
-					timeout=float( arduinoCmds["com"]["timeout"]))
-			self._trace = TraceControl( root )
+				self._conn = serial.Serial( arduinoCmds["com"]["port0"], 
+					int( arduinoCmds["com"]["baud"]), timeout=float( arduinoCmds["com"]["timeout"]))
 		except:
-			print "Error opening com port:", sys.exc_info()[0]
-			raise 
+			try:
+				self._conn = serial.Serial( arduinoCmds["com"]["port1"], 
+					int( arduinoCmds["com"]["baud"]), timeout=float( arduinoCmds["com"]["timeout"]))
+
+			except:
+				tkMessageBox.showerror("Error", "Can't open serial port")
+				print "Error opening com port:", sys.exc_info()[0]
+				raise 
+
+		self._trace = TraceControl( root )
 
 	def DisableUiControls( self ):
 		self._loaderControl.Disable()
@@ -107,7 +115,13 @@ class ArduinoLink( object ):
 	def Tick( self ):
 		# see if the arduino has written anything to the serial port
 		if( self._debug == False ):
-			bytesToRead = self._conn.inWaiting()
+			try:
+				bytesToRead = self._conn.inWaiting()
+			except:
+				tkMessageBox.showerror("Error", "Serial connection broken.")
+				print "Error opening com port:", sys.exc_info()[0]
+				raise
+
 			if bytesToRead > 0:
 				# enable writing to the textwidget
 				self._trace._textwidget.config( state='normal' )
@@ -165,7 +179,12 @@ class ArduinoLink( object ):
 		if( self._debug == False ):
 			# write the command to the arduino
 			outstr = cmd + '='
-			self._conn.write( outstr.encode())
+			try:
+				self._conn.write( outstr.encode())
+			except:
+				tkMessageBox.showerror("Error", "Write failed. Serial connection broken.")
+				print "Error opening com port:", sys.exc_info()[0]
+				raise
 
 		# scroll the text widget to the end so you can see it
 		self._trace._textwidget.see( END )
