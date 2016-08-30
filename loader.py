@@ -18,8 +18,7 @@
 #
 # Classes M1Control, and M2Control each provide control of the two stepper 
 # motors in the system. Each class provides UI controls to home, limit, 
-# step forward, and step reverse. Both M1Control and M2Control are derived 
-# from class MotorControl.
+# step forward, and step reverse. 
 #
 # LoaderControl encapsulates the widgets used to execute sample loading 
 # functions.
