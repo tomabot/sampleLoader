@@ -34,7 +34,8 @@
         "stop" : "STO"
     }, 
     "com" : {
-        "port" : "/dev/ttyACM0",
+        "port0" : "/dev/ttyACM0",
+        "port1" : "/dev/ttyACM1",
         "baud" : "9600",
         "timeout" : "0.1"
     },
