@@ -18,7 +18,8 @@
 #
 # Classes M1Control, and M2Control each provide control of the two stepper 
 # motors in the system. Each class provides UI controls to home, limit, 
-# step forward, and step reverse. 
+# step forward, and step reverse. Both M1Control and M2Control are derived 
+# from class MotorControl.
 #
 # LoaderControl encapsulates the widgets used to execute sample loading 
 # functions.
@@ -163,23 +164,32 @@ class ArduinoLink( object ):
 		self._timer = duration 
 		self._timerActive = True
 
-	def Send( self, cmd ):
+	def Send( self, cmd, extra=None ):
 		# Log commands to the arduino 
-		logEntry = ''.join([ datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f "), cmd ])
+		if( extra != None ):
+			logEntry = ''.join([ datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f "), cmd + extra ])
+		else:
+			logEntry = ''.join([ datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f "), cmd ])
+
 		with open(self._logFileName, 'a') as logFile:
 			print >>logFile, logEntry
 
 		# enable the trace window for writing
 		self._trace._textwidget.config( state='normal' )
 
+		logStr = cmd 
+		if( extra != None ):
+			logStr += extra 
+		logStr += '='
+
 		# write the command to the trace window
-		self._trace._textwidget.insert( END, '>>>' + cmd + '\n' )
+		self._trace._textwidget.insert( END, '>>>' + logStr + '\n' )
 
 		if( self._debug == False ):
 			# write the command to the arduino
-			outstr = cmd + '='
 			try:
-				self._conn.write( outstr.encode())
+				cmd += '='
+				self._conn.write( cmd.encode())
 			except:
 				tkMessageBox.showerror("Error", "Write failed. Serial connection broken.")
 				print "Error opening com port:", sys.exc_info()[0]
@@ -204,6 +214,7 @@ class LoaderControl( object ):
 		self._arduinoCmds = arduinoCmds
 		self._arduinoLink = arduinoLink
 		self._profiles = None
+		self._loginControl = None
 
 		self._lfrm = LabelFrame( root, text='Load Functions', 
 			padx=10, pady=10, borderwidth=0 )
@@ -245,13 +256,10 @@ class LoaderControl( object ):
 		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["findneedle"] )
 
 	def btnGo_click( self ):
-		# send the go command to the arduino
-		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["go"] )
-
 		# see how long to leave the UI disabled
-		selectedLabel = self._cbox['values'][self._cbox.current()]
-
 		# find the profile array entry that corresponds to the profile selected in the combo box
+
+		selectedLabel = self._cbox['values'][self._cbox.current()]
 		selectedProfile = [ p for p in self._profiles["profile"] if p["label"] == selectedLabel ]
 
 		# set the timer for leaving the UI disabled
@@ -259,6 +267,13 @@ class LoaderControl( object ):
 			# get the time it takes to execute the profile from the json file entry
 			timerVal = int( selectedProfile[0]["time"] ) * 10
 			self._arduinoLink.SetTimer( timerVal )
+
+		# send the go command to the arduino
+		extraLogInfo  = ", (operator=" + self._loginControl.getOper() + ", " 
+		extraLogInfo += "profile=" + selectedLabel + ", "
+		extraLogInfo += "accession=" + self._loginControl.getAccession() + ", " 
+		extraLogInfo += "sample=" + self._loginControl.getSample() + ")"
+		self._arduinoLink.Send( self._arduinoCmds["loadcmds"]["go"], extraLogInfo )
 
 	def btnLoad_click( self ):
 		# get the profile label selected in the combo box
@@ -286,6 +301,9 @@ class LoaderControl( object ):
 	def Enable( self ):
 		for child in self._lfrm.winfo_children():
 			child.configure(state='normal')
+
+	def setLoginControl( self, logCtl ):
+		self._loginControl = logCtl
 
 class LoginControl( object ):
         def __init__( self, root, loaderControl, m1Control, m2Control, logFileName, barcodeLen ):
@@ -496,6 +514,15 @@ class LoginControl( object ):
 		for child in self._lfrm.winfo_children():
 			child.configure(state='normal')
 
+	def getOper( self ):
+		return self._operVar.get()
+
+	def getAccession( self ):
+		return self._accessionVar.get()
+
+	def getSample( self ):
+		return self._sampleVar.get()
+
 class MotorControl1( object ):
 	def __init__( self, root, arduinoCmds, arduinoLink ):
 		self._arduinoCmds = arduinoCmds
@@ -632,6 +659,8 @@ def BuildUI( tkRoot, arduinoCmds, logFileName, debug ):
 	m2Control.Disable()
 
 	loginControl = LoginControl( frm, loaderControl, m1Control, m2Control, logFileName, int( arduinoCmds["barcodeLen"] ))
+	loaderControl.setLoginControl( loginControl )
+
 	appControl   = AppControl( frm, arduinoCmds, arduinoLink )
 
 	frm.grid( row=0, column=0, sticky=W )
